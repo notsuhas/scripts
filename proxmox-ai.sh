@@ -313,6 +313,18 @@ sed -i "s/^#*PasswordAuthentication.*/PasswordAuthentication yes/" /etc/ssh/sshd
 systemctl enable ssh
 systemctl restart ssh
 
+echo ">>> [root] Adding xterm-ghostty fallback (degrades to xterm-256color if terminfo missing)..."
+# Ghostty's terminfo only exists as Zig source upstream — no plain file to
+# fetch. Without an entry, SSH sessions render broken glyphs. Fall back to
+# xterm-256color so the shell works; users who want full ghostty caps can
+# run \`infocmp -x xterm-ghostty | ssh root@<ip> -- tic -x -\` from their Mac.
+cat > /etc/profile.d/ghostty-fallback.sh << 'GHOSTTY'
+if [ "\$TERM" = "xterm-ghostty" ] && ! infocmp xterm-ghostty >/dev/null 2>&1; then
+    export TERM=xterm-256color
+fi
+GHOSTTY
+chmod 0644 /etc/profile.d/ghostty-fallback.sh
+
 echo ">>> [root] Setting up weekly system update cron..."
 cat > /etc/cron.d/system-update << 'CRON'
 # Weekly system update - Sunday 3:00 AM local time
@@ -709,6 +721,10 @@ print_summary() {
     echo ""
     echo -e "  ${BOLD}5. Try brew${NC}"
     echo -e "     ${CYAN}brew install <whatever>${NC}  (no root, no bypass — works cleanly)"
+    echo ""
+    echo -e "  ${BOLD}6. If using Ghostty: push terminfo from your Mac${NC}"
+    [[ -n "${ct_ip:-}" ]] && echo -e "     ${CYAN}infocmp -x xterm-ghostty | ssh root@${ct_ip} -- tic -x -${NC}"
+    [[ -z "${ct_ip:-}" ]] && echo -e "     ${CYAN}infocmp -x xterm-ghostty | ssh root@<ct-ip> -- tic -x -${NC}"
     echo ""
     echo -e "${YELLOW}${BOLD}  └────────────────────────────────────────────────────────────────┘${NC}"
     echo ""
