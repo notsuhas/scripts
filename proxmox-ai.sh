@@ -248,6 +248,7 @@ apt-get install -y -qq \\
     git curl wget unzip zip \\
     ca-certificates gnupg lsb-release apt-transport-https \\
     bash-completion locales \\
+    zsh \\
     htop nano vim tmux screen \\
     jq yq tree \\
     net-tools iproute2 iputils-ping dnsutils \\
